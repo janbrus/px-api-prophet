@@ -1,9 +1,7 @@
 """
 coding: utf-8
 
-@authour: Christine K. Kaushal
-
-28.09.18
+@authour: Christine K. Kaushal, modified Jan Bruusgaard
 
 Inspired by:
 
@@ -86,7 +84,7 @@ class API_to_data:
         convert = {'æ' : '%C3%A6', 'Æ' : '%C3%86', 'ø' : '%C3%B8', 'Ø' : '%C3%98', 'å' : '%C3%A5', 'Å' : '%C3%85',
                    '"' : '%22', '(' : '%28', ')' : '%29', ' ' : '%20'}
 
-        search_str = '{base_url}/{language}/table/?query={phrase}'.format(base_url = self.burl, language = self.language, phrase = phrase)
+        search_str = '{base_url}/{language}/table/?query={phrase}'.format(base_url=self.burl, language=self.language, phrase=phrase)
 
         for k, v in convert.items():
             search_str = search_str.replace(k, v)
@@ -112,12 +110,12 @@ class API_to_data:
 
         # change order of columns to make it more intuitive (table_title is first) 
         cols = df.columns.tolist()
-        cols.sort(reverse = True)
+        cols.sort(reverse=True)
         df = df[cols[:-2]]
 
         return df
 
-    def get_variables(self, table_id = None):
+    def get_variables(self, table_id=None):
         """
         Returns a list. 
 
@@ -136,15 +134,15 @@ class API_to_data:
         """
         try:
             numb = int(table_id)
-            if len(str(numb))==4:
-                numb = '0'+str(numb)
+            if len(str(numb)) == 4:
+                numb = '0' + str(numb)
 
         except ValueError:
             print('table_id mus be of type integer')
 
         if self.furl is None:
-            self.furl = '{base_url}/{language}/table/{table_id}'.format(base_url = self.burl, language = self.language, 
-                                                                             table_id = numb)
+            self.furl = '{base_url}/{language}/table/{table_id}'.format(base_url=self.burl, language=self.language,
+                                                                             table_id=numb)
 
         df = pd.read_json(self.furl)
         variables = [dict(values) for values in df.iloc[:, 1]]
@@ -170,7 +168,7 @@ class API_to_data:
         """
 
         # get a list with dictionaries containing information about each variable
-        self.variables = self.get_variables(table_id = table_id)
+        self.variables = self.get_variables(table_id=table_id)
 
         table_info = pd.read_json(self.furl)
         table_title = table_info.iloc[0, 0]
@@ -190,16 +188,16 @@ class API_to_data:
         # todo: add buttons for selecting "all", "latest" , "first" and "none"
 
         selection_widgets = [widgets.widget_selection.SelectMultiple(
-                                options = option_list[var], 
-                                rows = 8,
-                                layout ={'width' : '500px'}
+                                options=option_list[var],
+                                rows=8,
+                                layout={'width' : '500px'}
                                 )
                              for var in var_list]
 
         # put all the widgets in a container
         variables_container = widgets.Tab(selection_widgets)
 
-        # label each container with the variable label 
+        # label each container with the variable label
         for var in var_list:
             title = str(self.variables[var]['text'])
             variables_container.set_title(var, title)
@@ -207,17 +205,17 @@ class API_to_data:
         # build widgets and put in one widget container
         headline = widgets.Label(value = table_title, color = 'blue')
 
-        endline = widgets.Label(value = '''Select category and click on elements 
+        endline = widgets.Label(value='''Select category and click on elements 
             to be included in the table (CTRL-A selects "all")''')
 
-        url_text = widgets.Label(value = self.furl)
+        url_text = widgets.Label(value=self.furl)
 
         from IPython.display import display
         button = widgets.Button(description="Click when finished")
 
-        selection_container = widgets.VBox([headline, 
-                                            endline, 
-                                            variables_container, 
+        selection_container = widgets.VBox([headline,
+                                            endline,
+                                            variables_container,
                                             url_text,
                                             button])
 
@@ -229,10 +227,10 @@ class API_to_data:
         button.on_click(clicked)
         return selection_container
 
-    def get_json(self, box=None, out = 'dict'):
+    def get_json(self, box=None, out='dict'):
         """
-        Takes a widget container as input (where the user has selected varables) 
-        and returns a json dictionary or string that will fetch these variables. 
+        Takes a widget container as input (where the user has selected varables)
+        and returns a json dictionary or string that will fetch these variables.
 
         The json follows the json-stat format.
 
@@ -267,7 +265,7 @@ class API_to_data:
         for x in var_list:
             value_list = str(list(box.children[2].children[x].value))
             query_element[x] = '{{"code": "{code}", "selection": {{"filter": "item", "values": {values} }}}}'.format(
-                code = self.variables[x]['code'], 
+                code = self.variables[x]['code'],
                 values = value_list)
             query_element[x] = query_element[x].replace("\'", '"')
 
@@ -318,7 +316,7 @@ class API_to_data:
 
             query = self.get_json(from_box)
             url = from_box.children[3].value
-            data = requests.post(url, json = query)
+            data = requests.post(url, json=query)
             results = pyjstat.from_json_stat(data.json(object_pairs_hook=OrderedDict))
             label = data.json(object_pairs_hook=OrderedDict)
             return [results[0], label['dataset']['label']]
@@ -328,7 +326,7 @@ class API_to_data:
             print('You must make choices in the box!')
 
     def fiksDato(self, dato):
-        hjdat = int(dato[5:6])*3
+        hjdat = int(dato[5:6]) * 3
         hjdat2 = str(hjdat)
         if hjdat < 12:
             dato = dato[0:4] + '-0' + hjdat2
@@ -364,23 +362,27 @@ class API_to_data:
                 self.time = 'måned'
                 df_ret = df[[self.time, val_col]]
                 df_ret.loc[:, self.time] = pd.to_datetime(df[self.time].str.replace('M', '-'))
-                freq = 'M'; periods = 12;
+                freq = 'M';
+                periods = 12;
             elif 'U' in df_ret.loc[0, self.time]:
                 self.time = 'uke'
                 df_ret = df[[self.time, val_col]] 
                 df_ret.loc[:, self.time] = pd.to_datetime((df[self.time].str.replace('U', '-')).add('-1'), format='%Y-%W-%w')
-                freg = 'W'; periods = 52;
+                freq = 'W'
+                periods = 52
             elif 'K' in df_ret.loc[0, self.time]:
-                time_col = 'kvartal'
-                df_ret = df[[self.time, val_col]] 
+                self.time = 'kvartal'
+                df_ret = df[[self.time, val_col]]
                 df_ret.loc[:, self.time] = pd.to_datetime(df[self.time].str.replace('K', '-'))
                 df_ret.loc[:, self.time] = df[self.time].apply(self.fiksDato)
-                freq = 'q'; periods = 4;
+                freq = 'q'
+                periods = 4
             else:
                 self.time = 'år'
-                df_ret = df[[self.time, val_col]] 
+                df_ret = df[[self.time, val_col]]
                 df_ret.loc[:, self.time] = pd.to_datetime(df[self.time])
                 freq = 'y'
+                periods = 1
         elif self.language == 'en':
             df_ret = df[[self.time, val_col]]
 
@@ -388,23 +390,27 @@ class API_to_data:
                 self.time = 'month'
                 df_ret = df[[self.time, val_col]]
                 df_ret.loc[:, self.time] = pd.to_datetime(df[self.time].str.replace('M', '-'))
-                freq = 'M'; periods = 12;
+                freq = 'M'
+                periods = 12
             elif 'U' in df_ret.loc[0, self.time]:
                 self.time = 'week'
                 df_ret = df[[self.time, val_col]] 
                 df_ret.loc[:, self.time] = pd.to_datetime((df[self.time].str.replace('U', '-')).add('-1'), format='%Y-%W-%w')
-                freg = 'W'; periods = 52;
+                freq = 'W'
+                periods = 52
             elif 'K' in df_ret.loc[0, self.time]:
                 self.time = 'quarter'
                 df_ret = df[[self.time, val_col]]
                 df_ret.loc[:, self.time] = pd.to_datetime(df[self.time].str.replace('K', '-'))
                 df_ret.loc[:, self.time] = df[self.time].apply(self.fiksDato)
-                freq = 'q'; periods = 4;
+                freq = 'q'
+                periods = 4
             else:
                 self.time = 'year'
-                df_ret = df[[self.time, val_col]] 
+                df_ret = df[[self.time, val_col]]
                 df_ret.loc[:, self.time] = pd.to_datetime(df[self.time])
                 freq = 'y'
+                periods = 1
 
         #the input to `Prophet` is always a `pandas.DataFrame` object, and it must contain two columns: `ds` and `y`:
         df_ret.columns = ['ds', 'y']
